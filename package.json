@@ -1,0 +1,28 @@
+{
+  "name": "@theravenseb/shock-client",
+  "version": "1.0.0",
+  "description": "A community-made Node bot library for controling PiShock devices",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheRavenSeb/Shock-Client.git"
+  },
+  "keywords": [
+    "PiShock",
+    "pishock",
+    "controller"
+  ],
+  "author": "Caleb Thomas (TheRavenSeb)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TheRavenSeb/Shock-Client/issues"
+  },
+  "homepage": "https://github.com/TheRavenSeb/Shock-Client#readme",
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}
