@@ -1,25 +1,25 @@
 //class file for Shocker
 const data = require('./data/uri.js')
+require('dotenv').config()
+
 
 
 
 /**
  * @class Shocker
  * @classdesc This class is used to create a new Shocker object
- * @param {string} username - Username you use to log into PiShock.com. Can be found in the Account section of the website.
- * @param {string} Apikey - API Key generated on PiShock.com Can be found in the Account section of the website.
- * @param {string} code - Sharecode generated on PiShock.com. Limitations can be set when generating the code.
- * @param {string} Name - Name of what sent the commands. This will showup in the PiShock logs on the website.
+ * 
  * @returns {Shocker} - A new Shocker object
  * @example
- * const shocker = new Shocker('theravenseb', 'hfsjifh39235023-scdjuevfreidc', 'ABCDEFG', 'TEST_BOT');
+ * const shocker = new Shocker();
  */
 module.exports.default = class Shocker {
-  constructor(username, Apikey, code, Name) {
-    this.Username = username
-    this.Apikey = Apikey
-    this.Code = code
-    this.Name = Name
+  constructor() {
+    this.Username = process.env.Username
+    this.Apikey = process.env.Apikey
+    this.Code = process.env.Code
+    this.Name = process.env.Name
+    this.Logverbose = process.env.Logverbose
     
   }
 
@@ -40,7 +40,7 @@ module.exports.default = class Shocker {
 
     }
 
-    fetch("https://do.pishock.com/api/GetShockerInfo", {
+    fetch(data.InfoURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -5,5 +5,6 @@
 
 
 const data = {InfoURL:"https://do.pishock.com/api/GetShockerInfo",
-    OperateURL:"https://do.pishock.com/api/apioperate",}
+    OperateURL:"https://ps.pishock.com/PiShock/Operate",
+GetShockerInfoURL:"https://do.pishock.com/api/GetShockerInfo",}
 module.exports = data
