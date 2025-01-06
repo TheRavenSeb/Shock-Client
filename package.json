@@ -1,6 +1,6 @@
 {
   "name": "shock-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A community-made Node bot library for controling PiShock devices",
   "main": "index.js",
   "type": "commonjs",
