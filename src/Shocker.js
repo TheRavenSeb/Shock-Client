@@ -14,14 +14,18 @@ require('dotenv').config()
  * const shocker = new Shocker();
  */
 module.exports.default = class Shocker {
-  constructor() {
-    this.Username = process.env.Username
-    this.Apikey = process.env.Apikey
-    this.Code = process.env.Code
-    this.Name = process.env.Name
-    this.Logverbose = process.env.Logverbose
-    
+  constructor(config) {
+    this.Username = config.Username
+    this.Apikey = config.Apikey
+    this.Code = config.Codes
+    this.Name = config.Name
+    this.Logverbose = config.Logverbose
+    this.IsSitEnabled
+    if(this.IsSitEnabled){
+      console.warn("Sit Down Command enabled this is a damgerous action to disable please change IsSitEnabled:false")
+    }
   }
+  
 
   /**
    * @method info
@@ -32,14 +36,17 @@ module.exports.default = class Shocker {
    * 
    */
   info() {
+    var returnData = ''
     const body = {
             Username:this.Username,
             Apikey:this.Apikey,
-            Code:this.Code,
+            Code:null,
             Name:this.Name
 
     }
-
+    console.log(body)
+    for (var codes in this.Code ){
+        body.Code = codes
     fetch(data.InfoURL, {
         method: 'POST',
         headers: {
@@ -49,8 +56,11 @@ module.exports.default = class Shocker {
     }
         
     ).then((res) => res.json()).then((data) => {
-      return console.log(data)})
-  }
+        returnData += data
+        
+      })
+    }
+    return returnData}
 /**
  * 
  * @param {Number} Intensity 
@@ -167,6 +177,51 @@ module.exports.default = class Shocker {
 
 
 }
+
+async sitDown(){
+  if (this.IsSitEnabled){
+  const body ={
+    Username:this.Username,
+     Apikey:this.Apikey,
+        Code:this.Code,
+        Name:this.Name,
+        Intensity:0,
+        Duration:2,
+        Op:1
+
+}
+  for ( body.Intensity = 0; body.Intensity <= 100; i++) {
+    await sleep(250);
+    body.Intensity +=1
+    body.Duration = 2
+    fetch(data.OperateURL,{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body:JSON.stringify(body)
+    }
+    
+
+).then((res) => res.text()).then((data) => {
+})
+}
+
+    body.Intensity = null
+    body.Duration = null
+    return console.log("Sit Complated")
+}
+else{
+
+  return console.error("The SitDown function is not enabled please add IsSitEnabled:true to your config")
+}
+}
+
+
+ zap(Intensity, Duration){
+
+  this.shock(Intensity,Duration)
+ } 
 }
 
 
