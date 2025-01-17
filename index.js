@@ -8,6 +8,9 @@ this file should be as simple as possible, and should not contain any logic.
 // SECTION - Class assignment
 
 //class shocker
+
+
+
 module.exports = require('./src/Shocker.js').default
 
 

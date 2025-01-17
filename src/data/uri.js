@@ -4,7 +4,12 @@
 
 
 
-const data = {InfoURL:"https://do.pishock.com/api/GetShockerInfo",
-    OperateURL:"https://ps.pishock.com/PiShock/Operate",
-GetShockerInfoURL:"https://do.pishock.com/api/GetShockerInfo",}
+const data = {
+    DeviceURL: "https://ps.pishock.com/PiShock/GetUserDevices",
+    GetShockerInfoURL: "https://do.pishock.com/api/GetShockerInfo",
+    InfoURL: "https://do.pishock.com/api/GetShockerInfo",
+    OperateURL: "https://ps.pishock.com/PiShock/Operate",
+    Vaild: "https://auth.pishock.com/Auth/GetUserIfAPIKeyValid",
+    WebShocket: "wss://broker.pishock.com/v2"
+}
 module.exports = data
