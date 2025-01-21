@@ -22,8 +22,7 @@ async function start(){
             console.log(device)
         }
         )
-        pishock.shock("puppy 1",1,3
-        )
+        pishock.ping()
 
         
     })
