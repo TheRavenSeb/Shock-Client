@@ -12,8 +12,7 @@ module.exports ={
 
     getUserId: async function checkVaildApi(Username, Apikey){
         let result
-        await fetch(`${uri.Vaild}?apikey=${Apikey}&username=${Username}`
-        ).then((res) => res.json()).then((data) => {
+        await fetch(`${uri.Vaild}?apikey=${Apikey}&username=${Username}`).then((res) => res.json()).then((data) => {
           result = data.UserId
            
         }
@@ -21,6 +20,13 @@ module.exports ={
         )
         return result
 
+    },
+    getSharedDevices: async function getSharedDevices(UserId, Apikey){
+        let result
+        await fetch(`${uri.SharedDevicesURL}?UserId=${UserId}&Token=${Apikey}&api=true`).then((res) => res.json()).then((data) => {
+            result = data
+        })
+        return result
     },
 
     getDevices: async function getDevices(UserId, Apikey){

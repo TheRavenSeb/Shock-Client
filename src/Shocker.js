@@ -4,7 +4,10 @@ const functions = require('./data/functions.js')
 require('dotenv').config()
 
 
-
+//sleep function
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
 
 /**
@@ -24,12 +27,15 @@ module.exports.default =  class Shocker {
     this.Name = config.Name;
     this.Logverbose = config.Logverbose;
     this.IsSitEnabled = config.IsSitEnabled;
+    this.HubName = config.HubName;
     this.WebSocket = new WebSocket(`${data.WebShocket}?Username=${this.Username}&ApiKey=${this.Apikey}`);
     
     
     this.WebSocket.onmessage = function(event) {
       const data = JSON.parse(event.data);
+      if(this.Logverbose >= 2){
       console.log(data);
+      }
     };
     
     // Initialize listeners
@@ -81,6 +87,8 @@ module.exports.default =  class Shocker {
     
     const Devices = await functions.getDevices(UserId, this.Apikey);
     this.Devices = Devices;
+    const SharedDevices = await functions.getSharedDevices(UserId, this.Apikey);
+    this.SharedDevices = SharedDevices;
   }
 
   emitReadyEvent() {
@@ -91,6 +99,25 @@ module.exports.default =  class Shocker {
     // Emit a custom 'shock' event
     this.emit('shock');
   }
+  emitSitEvent() {
+    // Emit a custom 'sit' event
+    this.emit('sit');
+  }
+  emitErrorEvent() {
+    // Emit a custom 'error' event
+    this.emit('error');
+  }
+
+  emitVibrateEvent() {
+    // Emit a custom 'vibrate' event
+    this.emit('vibrate');
+  }
+  emitBeepEvent() {
+    // Emit a custom 'beep' event
+    this.emit('beep');
+  }
+
+
 
 
   onEvent(event,callback) {
@@ -99,6 +126,12 @@ module.exports.default =  class Shocker {
     
   }
 
+  
+
+  ping() {
+
+    this.WebSocket.send(JSON.stringify({ "Operation":"PING" }))
+  }
   /**
    * @method info
    * @description This method is used to get the information of the device
@@ -107,7 +140,6 @@ module.exports.default =  class Shocker {
    * shocker.info()
    * 
    */
-  
   info() {
     var returnData = ''
     const body = {
@@ -144,7 +176,7 @@ module.exports.default =  class Shocker {
  * 
  * 
  */
-  beep(Intensity, Duration) {
+  beep(Name, Intensity, Duration, ShareCode = null) {
     if (Intensity < 0 || Intensity > 100) {
       return console.error('Intensity must be between 0 and 100')
     }
@@ -152,33 +184,56 @@ module.exports.default =  class Shocker {
 
         return console.error('Duration must be between 0 and 10')
     }
+    // send command to websocket to shock format
 
-
-    const body ={
-        Username:this.Username,
-         Apikey:this.Apikey,
-            Code:this.Code,
-            Name:this.Name,
-            Intensity:Intensity,
-            Duration:Duration,
-            Op:2
-
-    }
-    fetch(data.OperateURL,{
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body:JSON.stringify(body)
-    }
-        
-    ).then((res) => res.text()).then((data) => {
-       return console.log(data)})
-
+    //find the device by name
     
+    var device = this.Devices.find((client => client.name === this.HubName))
+    var target =`c${device.clientId}-ops`
+    var shocker = this.Devices.find((client => client.clientId === device.clientId))
+    var shockers = shocker.shockers.find((awa => awa.name === Name))
+    var ty = 'api'
+    if(shockers !== undefined){
+    shockers = shocker.shockerId
+    }
+    if (ShareCode !== null){
+      shockers = this.SharedDevices[Name][0]
+      target =`c${device.clientId}-sops-${ShareCode}`
+      ty = 'sc'
+      
+    }
+    if (shocker === undefined){
+      return console.error('Device not found')
+    }
+
+    const body = JSON.stringify({
+      "Operation": "PUBLISH",
+      "PublishCommands": [
+      {
+        "Target": target,
+        "Body": {
+        "id": shockers,
+        "m": 'b',
+        "i": Intensity,
+        "d": Duration * 1000,
+        "r": true,
+        "l": {
+          "u": this.UserId,
+          "ty": ty,
+          "w": false,
+          "h": false,
+          "o": this.Username
+        }
+        }
+      }
+      ]
+    });
+    
+        this.WebSocket.send(body)
+          this.emitBeepEvent()
   }
 
-  shock(Name, Intensity, Duration) {
+  shock(Name, Intensity, Duration,ShareCode = null) {
     if (Intensity < 0 || Intensity > 100) {
       return console.error('Intensity must be between 0 and 100')
     }
@@ -187,35 +242,42 @@ module.exports.default =  class Shocker {
         return console.error('Duration must be between 0 and 10')
     }
     // send command to websocket to shock format 
-    var target =`c{${this.Devices[0].clientId}}--ops`
-    var shocker = this.Devices.find((client => client.clientId === this.Devices[0].clientId))
+    // find client id of device by name
+    var device = this.Devices.find((client => client.name === this.HubName))
+    var target =`c${device.clientId}-ops`
+    var shocker = this.Devices.find((client => client.clientId === device.clientId))
     shocker= shocker.shockers.find((shocker => shocker.name === Name))
+    if (ShareCode !== null){
+      shocker = this.SharedDevices.find((client => client.clientId === device.clientId))
+      target =`c${device.clientId}-sops-${ShareCode}`
+      
+    }
     if (shocker === undefined){
       return console.error('Device not found')
     }
 
-    const body =JSON.stringify({
-      Operation: "PUBLISH",
-      PublishCommands: [
-        {
-          Target: target,
-          Body: {
-        id: shocker. shockerId,
-        m: 's',
-        i: Intensity,
-        d: Duration * 1000,
-        r: true,
-        l: {
-          u: this.UserId,
-          ty: 'api',
-          w: false,
-          h: false,
-          o: this.Username
+    const body = JSON.stringify({
+      "Operation": "PUBLISH",
+      "PublishCommands": [
+      {
+        "Target": target,
+        "Body": {
+        "id": shocker.shockerId,
+        "m": 's',
+        "i": Intensity,
+        "d": Duration * 1000,
+        "r": true,
+        "l": {
+          "u": this.UserId,
+          "ty": 'api',
+          "w": false,
+          "h": false,
+          "o": this.Username
         }
-          }
         }
+      }
       ]
-        });
+    });
 
         this.WebSocket.send(body)
           this.emitShockEvent()
@@ -226,8 +288,14 @@ module.exports.default =  class Shocker {
   }
 
 
-
-  vibrate(Intensity, Duration) {
+  /**
+   * 
+   * @param {string} Name 
+   * @param {Number} Intensity 
+   * @param {Number} Duration 
+   * @returns 
+   */
+  vibrate(Name,Intensity, Duration) {
     if (Intensity < 0 || Intensity > 100) {
       return console.error('Intensity must be between 0 and 100')
     }
@@ -235,82 +303,86 @@ module.exports.default =  class Shocker {
 
         return console.error('Duration must be between 0 and 10')
     }
-    const body ={
-        Username:this.Username,
-         Apikey:this.Apikey,
-            Code:this.Code,
-            Name:this.Name,
-            Intensity:Intensity,
-            Duration:Duration,
-            Op:1
-
+    // send command to websocket to shock format 
+    var device = this.Devices.find((client => client.name === this.HubName))
+    var target =`c{${device.clientId}}--ops`
+    var shocker = this.Devices.find((client => client.clientId === device.clientId))
+    shocker= shocker.shockers.find((shocker => shocker.name === Name))
+    if (shocker === undefined){
+      shocker = this.SharedDevices.find((client => client.clientId === device.clientId))
+      
     }
-    fetch(data.OperateURL,{
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body:JSON.stringify(body)
+    if (shocker === undefined){
+      return console.error('Device not found')
     }
-        
-    ).then((res) => res.text()).then((data) => {
-       return console.log(data)})
 
+    const body = JSON.stringify({
+      "Operation": "PUBLISH",
+      "PublishCommands": [
+      {
+        "Target": target,
+        "Body": {
+        "id": shocker.shockerId,
+        "m": 'v',
+        "i": Intensity,
+        "d": Duration * 1000,
+        "r": true,
+        "l": {
+          "u": this.UserId,
+          "ty": 'api',
+          "w": false,
+          "h": false,
+          "o": this.Username
+        }
+        }
+      }
+      ]
+    });
+
+        this.WebSocket.send(body)
+          this.emitVibrateEvent()
     
   }
 
 
-  
-  buzz(Intensity, Duration) {
-    this.vibrate(Intensity, Duration)
+   /**
+   * 
+   * @param {string} Name 
+   * @param {Number} Intensity 
+   * @param {Number} Duration 
+   * @returns 
+   */
+  buzz(Name, Intensity, Duration) {
+    this.vibrate(Name, Intensity, Duration)
 
 
 
 }
 
-async sitDown(){
+async sitDown(Name, min =0, max = 100){
   if (this.IsSitEnabled){
-  const body ={
-    Username:this.Username,
-     Apikey:this.Apikey,
-        Code:this.Code,
-        Name:this.Name,
-        Intensity:0,
-        Duration:2,
-        Op:1
-
-}
-  for ( body.Intensity = 0; body.Intensity <= 100; i++) {
+  let Intensity;
+  for (Intensity = min; Intensity <= max; Intensity++) {
     await sleep(250);
-    body.Intensity +=1
-    body.Duration = 2
-    fetch(data.OperateURL,{
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body:JSON.stringify(body)
-    }
     
-
-).then((res) => res.text()).then((data) => {
-})
+    var Duration = 2
+    this.zap(Name, Intensity, Duration)
 }
 
-    body.Intensity = null
-    body.Duration = null
-    return console.log("Sit Complated")
+    
+this.emitSitEvent()
 }
 else{
 
   return console.error("The SitDown function is not enabled please add IsSitEnabled:true to your config")
 }
+
 }
 
 
- zap(Intensity, Duration){
+ zap(Name, Intensity, Duration){
 
-  this.shock(Intensity,Duration)
+  this.shock(Name, Intensity,Duration)
  } 
 
 
